@@ -254,6 +254,9 @@ photos = {k: load_cover(v) for k, v in {
     "adi2": "e0d4271a-image.webp", "lattafa": "06bf798c-image.webp", "nike1": "52937938-image.webp",
     "nike2": "8f770ddd-image.webp", "nike3": "eb698309-image.webp", "nike4": "852adee0-image.webp",
     "dkny1": "adacd9b2-image.webp", "dkny2": "00af0dcf-image.webp", "dkny3": "94d0617b-image.webp",
+    "mk": "cc44f2ac-image.webp", "karl2": "f5ea090a-image.webp", "orig1": "cc25459f-image.webp",
+    "orig2": "d2a62970-image.webp", "guess1": "ea5d39e3-image.webp", "guess2": "281344d6-image.webp",
+    "guess3": "d5e22b78-image.webp", "guess4": "f8265b40-image.webp",
 }.items()}
 
 CARD_BOX, CARD_CY = (960, 1250), 860
@@ -293,20 +296,28 @@ def photo_scene(key, z0, z1, px=0, py=0, darken=0):
 BASE = [
     (3.0, lambda t, d: intro(t)),
     (3.0, photo_scene("box", 1.0, 1.15, 0, 0.3, darken=0.45)),
-    (2.0, photo_scene("hugo1", 1.0, 1.12, 0, -0.4)),
-    (2.0, photo_scene("hugo2", 1.12, 1.0, 0.3, 0)),
-    (2.0, photo_scene("hugo3", 1.0, 1.1, -0.3, 0)),
-    (2.0, photo_scene("karl", 1.05, 1.18, 0, 0.5)),
-    (2.0, photo_scene("adi1", 1.0, 1.12, 0, 0)),
-    (2.0, photo_scene("adi2", 1.12, 1.0, 0, 0.3)),
-    (2.0, photo_scene("nike1", 1.0, 1.1, 0, 0.5)),
-    (2.0, photo_scene("nike2", 1.1, 1.0, 0.3, 0)),
-    (2.0, photo_scene("nike3", 1.0, 1.12, 0, -0.3)),
-    (2.0, photo_scene("nike4", 1.12, 1.0, 0, 0)),
-    (2.0, photo_scene("dkny1", 1.0, 1.12, 0.3, 0)),
-    (2.0, photo_scene("dkny3", 1.0, 1.1, 0, 0)),
-    (3.0, photo_scene("lattafa", 1.0, 1.12, 0, -0.2)),
-    (6.0, None),  # outro
+    (2.0, photo_scene("hugo1", 1.0, 1.12)),          # 2 HUGO
+    (2.0, photo_scene("hugo2", 1.12, 1.0)),
+    (2.0, photo_scene("hugo3", 1.0, 1.1)),
+    (2.0, photo_scene("karl", 1.0, 1.1)),            # 5 KARL
+    (2.0, photo_scene("karl2", 1.1, 1.0)),
+    (2.0, photo_scene("mk", 1.0, 1.1)),              # 7 MICHAEL KORS
+    (2.0, photo_scene("orig1", 1.1, 1.0)),           # 8 ADIDAS ORIGINALS
+    (2.0, photo_scene("orig2", 1.0, 1.1)),
+    (2.0, photo_scene("adi1", 1.0, 1.12)),           # 10 GALAXY
+    (2.0, photo_scene("adi2", 1.12, 1.0)),
+    (2.0, photo_scene("nike1", 1.0, 1.1)),           # 12 NIKE
+    (2.0, photo_scene("nike2", 1.1, 1.0)),
+    (2.0, photo_scene("nike3", 1.0, 1.12)),
+    (2.0, photo_scene("nike4", 1.12, 1.0)),
+    (2.0, photo_scene("guess1", 1.0, 1.1)),          # 16 GUESS
+    (2.0, photo_scene("guess2", 1.1, 1.0)),
+    (2.0, photo_scene("guess3", 1.0, 1.1)),
+    (2.0, photo_scene("guess4", 1.1, 1.0)),
+    (2.0, photo_scene("dkny1", 1.0, 1.12)),          # 20 DKNY
+    (2.0, photo_scene("dkny3", 1.0, 1.1)),
+    (3.0, photo_scene("lattafa", 1.0, 1.12)),        # 22 LATTAFA
+    (6.0, None),  # 23 outro
 ]
 starts = np.cumsum([0] + [d for d, _ in BASE]).tolist()
 TOTAL = starts[-1]
@@ -316,11 +327,14 @@ XF = 0.3
 def at(i): return starts[i]
 CAPS = [
     (at(2), at(5), Caption("YA LLEGÓ", "HUGO BOSS", "Camisetas de marca")),
-    (at(5), at(6), Caption("YA LLEGÓ", "KARL LAGERFELD", "Camisetas Paris", 140)),
-    (at(6), at(8), Caption("YA LLEGÓ", "ADIDAS GALAXY 7", "Running  ·  Cloudfoam", 150)),
-    (at(8), at(12), Caption("YA LLEGÓ", "NIKE AIR MAX 90", "Clásico de siempre", 150)),
-    (at(12), at(14), Caption("YA LLEGÓ", "DKNY", "Sneakers slip-on")),
-    (at(14), at(15), Caption("YA LLEGÓ", "LATTAFA", "Qaed Al Fursan  ·  90 ml")),
+    (at(5), at(7), Caption("YA LLEGÓ", "KARL LAGERFELD", "Camisetas Paris", 140)),
+    (at(7), at(8), Caption("YA LLEGÓ", "MICHAEL KORS", "Camisetas de marca", 150)),
+    (at(8), at(10), Caption("YA LLEGÓ", "ADIDAS ORIGINALS", "Camisetas y tops", 130)),
+    (at(10), at(12), Caption("YA LLEGÓ", "ADIDAS GALAXY 7", "Running  ·  Cloudfoam", 150)),
+    (at(12), at(16), Caption("YA LLEGÓ", "NIKE AIR MAX 90", "Clásico de siempre", 150)),
+    (at(16), at(20), Caption("YA LLEGÓ", "GUESS", "Sneakers con logo dorado")),
+    (at(20), at(22), Caption("YA LLEGÓ", "DKNY", "Sneakers slip-on")),
+    (at(22), at(23), Caption("YA LLEGÓ", "LATTAFA", "Qaed Al Fursan  ·  90 ml")),
 ]
 
 # intro-2 headline over box photo
