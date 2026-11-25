@@ -108,7 +108,7 @@ def vgrad(top_a, bot_a, y0, y1):
     im = Image.new("RGBA", (W, H), (0, 0, 0, 0)); im.putalpha(Image.fromarray(a))
     return im
 
-GRAD_BOT = vgrad(0, 235, 1050, 1920)
+GRAD_BOT = vgrad(0, 235, 1300, 1920)
 GRAD_TOP = vgrad(190, 0, 0, 380)
 
 # ---------- brand pieces ----------
@@ -256,9 +256,35 @@ photos = {k: load_cover(v) for k, v in {
     "dkny1": "adacd9b2-image.webp", "dkny2": "00af0dcf-image.webp", "dkny3": "94d0617b-image.webp",
 }.items()}
 
+CARD_BOX, CARD_CY = (960, 1250), 860
+_cards = {}
+def card_assets(key):
+    """Full (uncropped) photo as a framed card + blurred backdrop."""
+    if key in _cards: return _cards[key]
+    src = photos[key]
+    bg = kenburns(src, 0, 1, 1.0, 1.0).filter(ImageFilter.GaussianBlur(40))
+    bg.alpha_composite(Image.new("RGBA", (W, H), (0, 0, 0, 120)))
+    sc = min(CARD_BOX[0] / src.width, CARD_BOX[1] / src.height)
+    cw, ch = int(src.width * sc), int(src.height * sc)
+    ph = src.resize((cw, ch), Image.LANCZOS).convert("RGBA")
+    b, pad = 8, 40
+    card = Image.new("RGBA", (cw + 2 * (b + pad), ch + 2 * (b + pad)), (0, 0, 0, 0))
+    sh = Image.new("RGBA", card.size, (0, 0, 0, 0))
+    ImageDraw.Draw(sh).rounded_rectangle((pad, pad + 12, pad + cw + 2 * b, pad + ch + 2 * b + 12), 30, fill=(0, 0, 0, 200))
+    card.alpha_composite(sh.filter(ImageFilter.GaussianBlur(18)))
+    ImageDraw.Draw(card).rounded_rectangle((pad, pad, pad + cw + 2 * b, pad + ch + 2 * b), 30, fill=WHITE + (255,))
+    m = Image.new("L", (cw, ch), 0); ImageDraw.Draw(m).rounded_rectangle((0, 0, cw - 1, ch - 1), 24, fill=255)
+    card.paste(ph, (pad + b, pad + b), m)
+    _cards[key] = (bg, card)
+    return _cards[key]
+
 def photo_scene(key, z0, z1, px=0, py=0, darken=0):
     def fn(t, dur):
-        f = kenburns(photos[key], t, dur, z0, z1, px, py)
+        bg, card = card_assets(key)
+        f = bg.copy()
+        p = t / dur
+        z = 0.96 + 0.06 * (p if z1 > z0 else 1 - p)  # gentle zoom of the whole card, nothing cropped
+        paste(f, card, W / 2, CARD_CY, scale=z)
         if darken: f.alpha_composite(Image.new("RGBA", (W, H), (0, 0, 0, int(255 * darken))))
         return f
     return fn
