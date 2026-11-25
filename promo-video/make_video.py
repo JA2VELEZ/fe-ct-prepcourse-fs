@@ -321,6 +321,21 @@ O3 = text_img("Escríbenos y coordinamos tu entrega", oswald(52, "Medium"), (235
 O_NUM = text_img("316 439 5101", anton(120), WHITE, shadow=False)
 O_WA = text_img("ESCRÍBENOS POR WHATSAPP", oswald(38, "SemiBold"), WHITE, shadow=False, spacing=3)
 O_LOGO = build_logo(110, 40)
+def ig_icon(d):
+    g = Image.new("RGBA", (d, d)); gd = ImageDraw.Draw(g)
+    stops = [(254, 218, 117), (250, 126, 30), (214, 41, 118), (150, 47, 191), (79, 91, 213)]
+    for y in range(d):
+        k = (d - 1 - y) / (d - 1) * (len(stops) - 1); i = min(int(k), len(stops) - 2); u = k - i
+        gd.line((0, y, d, y), fill=tuple(int(stops[i][c] + (stops[i + 1][c] - stops[i][c]) * u) for c in range(3)) + (255,))
+    m = Image.new("L", (d, d), 0); ImageDraw.Draw(m).rounded_rectangle((0, 0, d - 1, d - 1), d // 4, fill=255)
+    im = Image.new("RGBA", (d, d), (0, 0, 0, 0)); im.paste(g, (0, 0), m); dr = ImageDraw.Draw(im); w = max(3, d // 14)
+    dr.rounded_rectangle((d * .2, d * .2, d * .8, d * .8), d // 6, outline=WHITE + (255,), width=w)
+    dr.ellipse((d * .35, d * .35, d * .65, d * .65), outline=WHITE + (255,), width=w)
+    dr.ellipse((d * .66, d * .27, d * .73, d * .34), fill=WHITE + (255,))
+    return im
+O_IG_TXT = text_img("@directo_usastore", anton(60), WHITE, shadow=False)
+O_IG = Image.new("RGBA", (O_IG_TXT.width + 110, 90), (0, 0, 0, 0))
+O_IG.alpha_composite(ig_icon(80), (0, 5)); O_IG.alpha_composite(O_IG_TXT, (100, (90 - O_IG_TXT.height) // 2))
 O_CATS = text_img("MODA  ·  CALZADO  ·  TECNOLOGÍA  ·  TACTICAL  ·  OUTDOOR", oswald(34, "Medium"), (200, 200, 200), spacing=2)
 O_CTA = text_img("¡PIDE LO TUYO DESDE USA!", anton(78), WHITE)
 
@@ -344,9 +359,11 @@ def outro(t):
     p = ease_out(prog(t, 1.4, 0.5))
     paste(f, O_CTA, W / 2, 1200 + (1 - p) * 40, alpha=p)
     p = ease_out(prog(t, 1.8, 0.6))
-    paste(f, FLAG_BIG, W / 2, 1400, alpha=p, scale=0.6)
-    paste(f, O_LOGO, W / 2, 1560, alpha=p)
-    paste(f, O_CATS, W / 2, 1720, alpha=ease_out(prog(t, 2.2, 0.5)))
+    paste(f, FLAG_BIG, W / 2, 1350, alpha=p, scale=0.6)
+    paste(f, O_LOGO, W / 2, 1500, alpha=p)
+    paste(f, O_CATS, W / 2, 1650, alpha=ease_out(prog(t, 2.2, 0.5)))
+    pi = ease_back(prog(t, 2.5, 0.5))
+    paste(f, O_IG, W / 2, 1790, alpha=clamp(pi), scale=max(0.01, pi))
     return f
 
 BASE[-1] = (6.0, lambda t, d: outro(t))
