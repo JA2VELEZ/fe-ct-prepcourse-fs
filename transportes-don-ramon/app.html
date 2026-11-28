@@ -275,6 +275,7 @@ const BARRIOS = {
   "Antioquia|Rionegro": ["Centro","San Antonio de Pereira","El Porvenir","Alto del Medio","Llanogrande","Cuatro Esquinas","Gualanday","Barro Blanco","Fontibón","Belchite","Abreo","Juan Antonio Murillo","Galicia","Sector aeropuerto JMC"],
 };
 const DEP_DEFECTO = "Antioquia";
+const VALLE_ABURRA = ["Medellín","Bello","Itagüí","Envigado","Sabaneta","La Estrella","Caldas","Copacabana","Girardota","Barbosa"];
 const ACCESO = ["Primer piso / casa","Sin ascensor (escaleras)","Edificio con ascensor"];
 
 const opt = (value, text = value) => { const o = document.createElement("option"); o.value = value; o.textContent = text; return o; };
@@ -298,7 +299,10 @@ function buildStop(p, nombre) {
 
   const dep = $(p + "Dep"), mun = $(p + "Mun"), bar = $(p + "Bar");
   dep.append(opt("", "Elige el departamento"));
-  Object.keys(DEPTOS).forEach((d) => dep.append(opt(d)));
+  dep.append(opt(DEP_DEFECTO));
+  const gDep = document.createElement("optgroup"); gDep.label = "Otros departamentos";
+  Object.keys(DEPTOS).filter((d) => d !== DEP_DEFECTO).forEach((d) => gDep.append(opt(d)));
+  dep.append(gDep);
   dep.value = DEP_DEFECTO;
   ACCESO.forEach((a) => $(p + "Piso").append(opt(a)));
 
@@ -307,7 +311,17 @@ function buildStop(p, nombre) {
   function fillMun() {
     mun.innerHTML = "";
     mun.append(opt("", dep.value ? "Elige el municipio" : "Primero elige el departamento"));
-    (DEPTOS[dep.value] || []).forEach((m) => mun.append(opt(m)));
+    const todos = DEPTOS[dep.value] || [];
+    if (dep.value === "Antioquia") {
+      // Primero Medellín y el Valle de Aburrá, luego el resto de Antioquia
+      const gV = document.createElement("optgroup"); gV.label = "Medellín y Valle de Aburrá";
+      VALLE_ABURRA.forEach((m) => gV.append(opt(m)));
+      const gR = document.createElement("optgroup"); gR.label = "Resto de Antioquia";
+      todos.filter((m) => !VALLE_ABURRA.includes(m)).forEach((m) => gR.append(opt(m)));
+      mun.append(gV, gR);
+    } else {
+      todos.forEach((m) => mun.append(opt(m)));
+    }
     if (dep.value) mun.append(otroOpt("✏️ No lo encuentro (escribirlo)"));
   }
   function fillBar() {
