@@ -356,9 +356,9 @@ function stopLines(p) {
   }
   const acceso = v(p + "Piso") + (v(p + "Piso") !== ACCESO[0] && v(p + "PisoNum") ? ` · Piso ${v(p + "PisoNum")}` : "");
   return [
-    `🗺️ Departamento: ${dep}`,
-    `🏙️ Municipio: ${mun}`,
-    `🏘️ Barrio / sector: ${bar}`,
+    `🌎 Departamento: ${dep}`,
+    `🌆 Municipio: ${mun}`,
+    `🏡 Barrio / sector: ${bar}`,
     `🏠 Dirección: ${v(p + "Dir")}`,
     `🏢 Acceso: ${acceso}`,
   ];
@@ -436,8 +436,8 @@ function horaBonita(t) {
 }
 
 function buildMessage() {
-  const lista = ITEMS.filter((n) => counts[n] > 0).map((n) => `▪️ ${counts[n]} × ${n}`);
-  if (v("otros")) lista.push(`▪️ ${v("otros")}`);
+  const lista = ITEMS.filter((n) => counts[n] > 0).map((n) => `🔹 ${counts[n]} × ${n}`);
+  if (v("otros")) lista.push(`🔹 ${v("otros")}`);
   const extras = picked("extras");
   const lines = [
     "¡Hola! Quiero cotizar un trasteo con Transportes Don Ramón 🚚💨",
@@ -457,20 +457,21 @@ function buildMessage() {
     ...stopLines("d"),
     "",
     "📦 *Elementos a transportar:*",
-    ...(lista.length ? lista : ["▪️ (sin especificar)"]),
+    ...(lista.length ? lista : ["🔹 (sin especificar)"]),
     "",
     `🚚 *Vehículo:* ${picked("vehicles")[0] || ""}`,
     "",
     `👥 *Modalidad:* ${picked("modo")[0] || ""}`,
   ];
-  if (extras.length) lines.push("", `⚙️ *Opciones:* ${extras.join(", ")}`);
+  if (extras.length) lines.push("", `🔧 *Opciones:* ${extras.join(", ")}`);
   lines.push("", `💳 *Forma de pago:* ${picked("pago")[0] || ""}`);
   return lines.join("\n");
 }
 
 function waLink(text) {
-  const base = NUMERO_WHATSAPP ? `https://wa.me/${NUMERO_WHATSAPP}` : "https://wa.me/";
-  return `${base}?text=${encodeURIComponent(text)}`;
+  // api.whatsapp.com conserva los emojis; el enlace corto wa.me a veces los daña al redirigir.
+  const phone = NUMERO_WHATSAPP ? `phone=${NUMERO_WHATSAPP}&` : "";
+  return `https://api.whatsapp.com/send?${phone}text=${encodeURIComponent(text)}`;
 }
 
 function validate(show) {
