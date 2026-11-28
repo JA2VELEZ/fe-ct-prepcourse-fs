@@ -1,0 +1,464 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>:root{padding-top:env(safe-area-inset-top,0px)}body{margin:0}[hidden]{display:none!important}</style>
+<title>Transportes Don Ramón</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap">
+<style>
+/* Layout: una sola columna tipo app móvil, campos en tarjetas grises redondeadas y botón fijo abajo */
+:root {
+  --bg: #ffffff;
+  --field: #f2f1ec;
+  --field-hover: #e9e8e1;
+  --fg: #141414;
+  --muted: #74736c;
+  --line: #e2e1da;
+  --accent: #c3f21f;
+  --accent-fg: #141414;
+  --chip-on: #141414;
+  --chip-on-fg: #ffffff;
+  --danger: #c4372b;
+  --font: "Manrope", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111210; --field: #1e1f1c; --field-hover: #282925; --fg: #f3f3ee; --muted: #a2a299;
+    --line: #2f302b; --accent: #c3f21f; --accent-fg: #141414; --chip-on: #f3f3ee; --chip-on-fg: #111210;
+    --danger: #ff7a6e; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111210; --field: #1e1f1c; --field-hover: #282925; --fg: #f3f3ee; --muted: #a2a299;
+  --line: #2f302b; --accent: #c3f21f; --accent-fg: #141414; --chip-on: #f3f3ee; --chip-on-fg: #111210;
+  --danger: #ff7a6e; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font); font-size: 16px; line-height: 1.4; }
+.wrap {
+  max-width: 560px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 12px 140px;
+  display: flex; flex-direction: column; gap: 14px;
+}
+header.brand { display: flex; align-items: center; gap: 12px; padding-block: 8px 6px; }
+.logo { width: 48px; height: 48px; border-radius: 14px; background: var(--accent); display: grid; place-items: center; flex: none; }
+.logo svg { width: 30px; height: 30px; }
+.brand h1 { font-size: 1.25rem; font-weight: 800; margin: 0; letter-spacing: -0.01em; }
+.brand p { margin: 0; color: var(--muted); font-size: 0.875rem; }
+.intro { margin: 0 0 4px; color: var(--muted); font-size: 0.95rem; }
+
+h2 { font-size: 1.05rem; font-weight: 700; margin: 14px 0 0; display: flex; align-items: center; gap: 8px; }
+h2 small { font-weight: 500; color: var(--muted); font-size: 0.8rem; }
+
+.field {
+  background: var(--field); border-radius: 18px; padding: 12px 18px; display: flex; flex-direction: column;
+  gap: 2px; border: 2px solid transparent; transition: border-color .15s, background .15s;
+}
+.field:focus-within { border-color: var(--fg); }
+.field.error { border-color: var(--danger); }
+.field label { font-size: 0.82rem; color: var(--muted); font-weight: 600; }
+.field input, .field textarea, .field select {
+  border: 0; background: transparent; color: var(--fg); font: inherit; font-size: 1.1rem; font-weight: 600;
+  padding: 2px 0; outline: none; width: 100%; min-width: 0;
+}
+.field input::placeholder, .field textarea::placeholder { color: var(--muted); opacity: .7; font-weight: 500; }
+.field textarea { resize: vertical; min-height: 64px; font-size: 1rem; }
+.row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media (max-width: 360px) { .row { grid-template-columns: 1fr; } }
+.err-msg { color: var(--danger); font-size: 0.8rem; font-weight: 600; display: none; }
+.field.error .err-msg { display: block; }
+
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip {
+  border: 0; background: var(--field); color: var(--fg); font: inherit; font-weight: 600; font-size: 0.98rem;
+  padding: 11px 16px; border-radius: 999px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
+  transition: background .15s, color .15s;
+}
+.chip:hover { background: var(--field-hover); }
+.chip[aria-pressed="true"] { background: var(--chip-on); color: var(--chip-on-fg); }
+.chip:focus-visible, .stepper button:focus-visible, .cta:focus-visible, summary:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+.route { position: relative; display: flex; flex-direction: column; gap: 10px; }
+.stop-tag { display: inline-flex; align-items: center; gap: 6px; }
+.dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.dot.a { background: var(--accent); box-shadow: 0 0 0 2px var(--fg); }
+.dot.b { background: var(--fg); }
+
+.items { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+@media (max-width: 380px) { .items { grid-template-columns: 1fr; } }
+.item { background: var(--field); border-radius: 16px; padding: 8px 8px 8px 14px; display: flex; align-items: center; justify-content: space-between; gap: 6px; min-width: 0; }
+.item.on { background: var(--chip-on); color: var(--chip-on-fg); }
+.item span.name { font-weight: 600; font-size: 0.95rem; min-width: 0; overflow-wrap: anywhere; }
+.stepper { display: flex; align-items: center; gap: 4px; flex: none; }
+.stepper button {
+  width: 32px; height: 32px; border-radius: 50%; border: 0; background: var(--bg); color: var(--fg);
+  font: inherit; font-size: 1.15rem; font-weight: 700; cursor: pointer; line-height: 1;
+}
+.stepper output { min-width: 18px; text-align: center; font-weight: 800; font-variant-numeric: tabular-nums; }
+
+.vehicles { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.veh { border: 2px solid transparent; background: var(--field); color: var(--fg); border-radius: 18px; padding: 12px 14px; text-align: left; font: inherit; cursor: pointer; display: flex; flex-direction: column; gap: 2px; }
+.veh b { font-size: 0.98rem; }
+.veh small { color: var(--muted); font-size: 0.8rem; font-weight: 500; }
+.veh[aria-pressed="true"] { border-color: var(--fg); background: var(--field-hover); }
+.veh:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+.money { display: flex; align-items: center; gap: 6px; }
+.money span { font-size: 1.1rem; font-weight: 700; color: var(--muted); }
+
+details.preview { background: var(--field); border-radius: 18px; padding: 14px 18px; }
+details.preview summary { cursor: pointer; font-weight: 700; }
+details.preview pre { white-space: pre-wrap; word-break: break-word; font-family: var(--font); font-size: 0.9rem; margin: 10px 0 0; color: var(--fg); }
+.note { color: var(--muted); font-size: 0.85rem; margin: 0; }
+
+.bar {
+  position: fixed; left: 0; right: 0; bottom: 0; background: var(--bg); border-top: 1px solid var(--line);
+  padding-top: 12px;
+  padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.bar-inner { max-width: 560px; margin: 0 auto; display: flex; flex-direction: column; gap: 6px; }
+.cta {
+  display: block; width: 100%; border: 0; border-radius: 20px; background: var(--accent); color: var(--accent-fg);
+  font: inherit; font-size: 1.2rem; font-weight: 800; padding: 18px; cursor: pointer; text-align: center; text-decoration: none;
+}
+.cta:active { transform: scale(.99); }
+.bar-msg { text-align: center; font-size: 0.85rem; font-weight: 600; color: var(--danger); min-height: 1em; margin: 0; }
+.bar-msg.ok { color: var(--muted); }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+
+<main class="wrap">
+  <header class="brand">
+    <div class="logo" aria-hidden="true">
+      <svg viewBox="0 0 32 32" fill="none" stroke="#141414" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round">
+        <path d="M3 9h15v13H3z" fill="#141414" stroke="none"/>
+        <path d="M18 13h6l4 5v4h-10z"/>
+        <circle cx="9" cy="24" r="2.6" fill="#c3f21f"/>
+        <circle cx="23" cy="24" r="2.6" fill="#c3f21f"/>
+      </svg>
+    </div>
+    <div>
+      <h1>Transportes Don Ramón</h1>
+      <p>Trasteos y fletes · Medellín y Valle de Aburrá</p>
+    </div>
+  </header>
+  <p class="intro">Llena los datos de tu trasteo y envíalos por WhatsApp. Te respondemos con la cotización.</p>
+
+  <form id="form" novalidate>
+    <div style="display:flex;flex-direction:column;gap:14px">
+
+      <h2>Tus datos</h2>
+      <div class="field" data-req>
+        <label for="nombre">Nombre</label>
+        <input id="nombre" autocomplete="name" placeholder="¿A nombre de quién?">
+        <span class="err-msg">Escribe tu nombre.</span>
+      </div>
+      <div class="field" data-req>
+        <label for="telefono">Celular</label>
+        <input id="telefono" type="tel" inputmode="tel" autocomplete="tel" placeholder="300 123 4567">
+        <span class="err-msg">Escribe un celular de contacto.</span>
+      </div>
+
+      <h2>¿Cuándo?</h2>
+      <div class="chips" id="dayChips">
+        <button type="button" class="chip" data-day="0" aria-pressed="false">Hoy</button>
+        <button type="button" class="chip" data-day="1" aria-pressed="false">Mañana</button>
+        <button type="button" class="chip" data-day="x" aria-pressed="false">Otra fecha</button>
+      </div>
+      <div class="row">
+        <div class="field" data-req>
+          <label for="fecha">📅 Fecha</label>
+          <input id="fecha" type="date">
+          <span class="err-msg">Elige la fecha.</span>
+        </div>
+        <div class="field" data-req>
+          <label for="hora">🕒 Hora</label>
+          <input id="hora" type="time" step="900">
+          <span class="err-msg">Elige la hora.</span>
+        </div>
+      </div>
+
+      <h2>Ruta</h2>
+      <div class="route">
+        <div class="field" data-req>
+          <label for="oBarrio"><span class="stop-tag"><i class="dot a"></i>Barrio de recogida</span></label>
+          <input id="oBarrio" placeholder="Ej. Belén, Envigado, Bello…" list="barrios">
+          <span class="err-msg">Escribe el barrio de recogida.</span>
+        </div>
+        <div class="field" data-req>
+          <label for="oDir">Dirección exacta de recogida</label>
+          <input id="oDir" placeholder="Ej. Cra 70 # 30-45, apto 302">
+          <span class="err-msg">Escribe la dirección de recogida.</span>
+        </div>
+        <div class="field">
+          <label for="oPiso">Piso y acceso (recogida)</label>
+          <select id="oPiso">
+            <option>Primer piso / casa</option>
+            <option>Piso 2–3 sin ascensor</option>
+            <option>Piso 4 o más sin ascensor</option>
+            <option>Edificio con ascensor</option>
+          </select>
+        </div>
+        <div class="field" data-req>
+          <label for="dBarrio"><span class="stop-tag"><i class="dot b"></i>Barrio de entrega</span></label>
+          <input id="dBarrio" placeholder="Ej. Laureles, Itagüí, Sabaneta…" list="barrios">
+          <span class="err-msg">Escribe el barrio de entrega.</span>
+        </div>
+        <div class="field" data-req>
+          <label for="dDir">Dirección exacta de entrega</label>
+          <input id="dDir" placeholder="Ej. Cl 10 Sur # 43-20, casa 5">
+          <span class="err-msg">Escribe la dirección de entrega.</span>
+        </div>
+        <div class="field">
+          <label for="dPiso">Piso y acceso (entrega)</label>
+          <select id="dPiso">
+            <option>Primer piso / casa</option>
+            <option>Piso 2–3 sin ascensor</option>
+            <option>Piso 4 o más sin ascensor</option>
+            <option>Edificio con ascensor</option>
+          </select>
+        </div>
+      </div>
+      <datalist id="barrios">
+        <option value="Medellín - El Poblado"><option value="Medellín - Laureles"><option value="Medellín - Belén">
+        <option value="Medellín - Robledo"><option value="Medellín - Buenos Aires"><option value="Medellín - Manrique">
+        <option value="Medellín - Santa Mónica"><option value="Envigado"><option value="Sabaneta"><option value="Itagüí">
+        <option value="La Estrella"><option value="Caldas"><option value="Bello"><option value="Copacabana">
+        <option value="Girardota"><option value="Barbosa">
+      </datalist>
+
+      <h2>📦 ¿Qué vas a trastear? <small>toca + para agregar</small></h2>
+      <div class="items" id="items"></div>
+      <div class="field">
+        <label for="otros">Otros elementos o detalles</label>
+        <textarea id="otros" placeholder="Ej. 2 bicicletas, matas, espejo grande…"></textarea>
+      </div>
+      <span class="err-msg" id="itemsErr" style="margin-top:-6px">Agrega al menos un elemento o escríbelo arriba.</span>
+
+      <h2>🚚 Vehículo</h2>
+      <div class="vehicles" id="vehicles">
+        <button type="button" class="veh" data-v="Pick-up / camioneta" aria-pressed="false"><b>Pick-up</b><small>Pocos elementos</small></button>
+        <button type="button" class="veh" data-v="Camión pequeño (NPR/NHR)" aria-pressed="true"><b>Camión pequeño</b><small>Apartaestudio, 1–2 alcobas</small></button>
+        <button type="button" class="veh" data-v="Camión mediano / furgón" aria-pressed="false"><b>Camión mediano</b><small>Casa o apto 3 alcobas</small></button>
+        <button type="button" class="veh" data-v="No sé, recomiéndenme" aria-pressed="false"><b>No sé</b><small>Ustedes me recomiendan</small></button>
+      </div>
+
+      <h2>👥 Modalidad del servicio</h2>
+      <div class="chips" id="modo" data-single>
+        <button type="button" class="chip" data-val="Transporte + 1 ayudante" aria-pressed="true">👷 Transporte + 1 ayudante</button>
+        <button type="button" class="chip" data-val="Transporte + 2 ayudantes" aria-pressed="false">👷👷 Transporte + 2 ayudantes</button>
+      </div>
+
+      <h2>Opciones</h2>
+      <div class="chips" id="extras">
+        <button type="button" class="chip" data-val="Muebles / frágil" aria-pressed="false">⚠️ Muebles / frágil</button>
+        <button type="button" class="chip" data-val="Embalaje" aria-pressed="false">📦 Necesito embalaje</button>
+        <button type="button" class="chip" data-val="Desarme y armado de muebles" aria-pressed="false">🔧 Desarmar y armar</button>
+        <button type="button" class="chip" data-val="Viajo con la carga" aria-pressed="false">🧍 Viajo con la carga</button>
+      </div>
+
+      <h2>💳 Forma de pago</h2>
+      <div class="chips" id="pago" data-single>
+        <button type="button" class="chip" data-val="Nequi" aria-pressed="false">Nequi</button>
+        <button type="button" class="chip" data-val="Daviplata" aria-pressed="false">Daviplata</button>
+        <button type="button" class="chip" data-val="Efectivo" aria-pressed="true">Efectivo</button>
+        <button type="button" class="chip" data-val="Transferencia" aria-pressed="false">Transferencia</button>
+      </div>
+
+      <h2>💰 Ofrece tu tarifa <small>opcional</small></h2>
+      <div class="field">
+        <label for="tarifa">Lo que te gustaría pagar</label>
+        <div class="money"><span>$</span><input id="tarifa" inputmode="numeric" placeholder="250.000"></div>
+      </div>
+
+      <details class="preview" id="previewBox">
+        <summary>Ver cómo llegará tu mensaje</summary>
+        <pre id="preview"></pre>
+      </details>
+      <p class="note">📸 Después de enviar, puedes mandarnos fotos de tus cosas por el mismo chat para una cotización más exacta.</p>
+    </div>
+  </form>
+</main>
+
+<div class="bar">
+  <div class="bar-inner">
+    <p class="bar-msg" id="barMsg" role="status"></p>
+    <a class="cta" id="send" href="#" target="_blank" rel="noopener">Enviar por WhatsApp</a>
+  </div>
+</div>
+
+<script>
+// ⚙️ CONFIGURA AQUÍ tu número de WhatsApp con indicativo de país, sin + ni espacios. Ej: "573001234567"
+const NUMERO_WHATSAPP = "";
+
+const ITEMS = ["Cama sencilla","Cama doble","Colchón","Nevera","Lavadora","Estufa","Sofá","Comedor","Escritorio","Closet / armario","Televisor","Cajas"];
+const counts = {};
+const $ = (id) => document.getElementById(id);
+
+// Elementos con contador
+const itemsBox = $("items");
+ITEMS.forEach((name, i) => {
+  counts[name] = 0;
+  const el = document.createElement("div");
+  el.className = "item";
+  el.innerHTML = `<span class="name">${name}</span>
+    <div class="stepper">
+      <button type="button" aria-label="Quitar ${name}" data-d="-1">−</button>
+      <output id="cnt${i}" aria-live="polite">0</output>
+      <button type="button" aria-label="Agregar ${name}" data-d="1">+</button>
+    </div>`;
+  el.addEventListener("click", (e) => {
+    const b = e.target.closest("button"); if (!b) return;
+    counts[name] = Math.max(0, counts[name] + Number(b.dataset.d));
+    el.querySelector("output").textContent = counts[name];
+    el.classList.toggle("on", counts[name] > 0);
+    update();
+  });
+  itemsBox.appendChild(el);
+});
+
+// Chips: selección única o múltiple
+document.querySelectorAll(".chips:not(#dayChips)").forEach((group) => {
+  group.addEventListener("click", (e) => {
+    const c = e.target.closest(".chip"); if (!c) return;
+    if (group.hasAttribute("data-single")) {
+      group.querySelectorAll(".chip").forEach((x) => x.setAttribute("aria-pressed", x === c ? "true" : "false"));
+    } else {
+      c.setAttribute("aria-pressed", c.getAttribute("aria-pressed") === "true" ? "false" : "true");
+    }
+    update();
+  });
+});
+$("vehicles").addEventListener("click", (e) => {
+  const v = e.target.closest(".veh"); if (!v) return;
+  $("vehicles").querySelectorAll(".veh").forEach((x) => x.setAttribute("aria-pressed", x === v ? "true" : "false"));
+  update();
+});
+
+// Fecha rápida
+const pad = (n) => String(n).padStart(2, "0");
+const isoDate = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+$("fecha").min = isoDate(new Date());
+$("dayChips").addEventListener("click", (e) => {
+  const c = e.target.closest(".chip"); if (!c) return;
+  $("dayChips").querySelectorAll(".chip").forEach((x) => x.setAttribute("aria-pressed", x === c ? "true" : "false"));
+  if (c.dataset.day === "x") { $("fecha").value = ""; try { $("fecha").showPicker(); } catch (_) { $("fecha").focus(); } }
+  else { const d = new Date(); d.setDate(d.getDate() + Number(c.dataset.day)); $("fecha").value = isoDate(d); }
+  update();
+});
+
+// Tarifa con puntos de miles
+$("tarifa").addEventListener("input", (e) => {
+  const digits = e.target.value.replace(/\D/g, "").slice(0, 9);
+  e.target.value = digits ? Number(digits).toLocaleString("es-CO") : "";
+});
+
+const picked = (id) => [...$(id).querySelectorAll('[aria-pressed="true"]')].map((x) => x.dataset.val || x.dataset.v);
+const v = (id) => $(id).value.trim();
+
+function fechaBonita(iso) {
+  if (!iso) return "";
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString("es-CO", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+}
+function horaBonita(t) {
+  if (!t) return "";
+  const [h, m] = t.split(":").map(Number);
+  return `${((h + 11) % 12) + 1}:${pad(m)} ${h < 12 ? "a. m." : "p. m."}`;
+}
+
+function buildMessage() {
+  const lista = ITEMS.filter((n) => counts[n] > 0).map((n) => `   • ${counts[n]} × ${n}`);
+  if (v("otros")) lista.push(`   • ${v("otros")}`);
+  const extras = picked("extras");
+  const lines = [
+    "¡Hola! Quiero cotizar un trasteo con Transportes Don Ramón 🚚💨",
+    "",
+    "✅ *Solicitud de Trasteo*",
+    `👤 Nombre: ${v("nombre")}`,
+    `📞 Celular: ${v("telefono")}`,
+    `📅 Fecha: ${fechaBonita(v("fecha"))}`,
+    `🕒 Hora: ${horaBonita(v("hora"))}`,
+    "📍 *Origen:*",
+    `   • Barrio de recogida: ${v("oBarrio")}`,
+    `   • Dirección exacta: ${v("oDir")}`,
+    `   • Acceso: ${v("oPiso")}`,
+    "📍 *Destino:*",
+    `   • Barrio de entrega: ${v("dBarrio")}`,
+    `   • Dirección exacta: ${v("dDir")}`,
+    `   • Acceso: ${v("dPiso")}`,
+    "📦 *Elementos a transportar:*",
+    ...(lista.length ? lista : ["   • (sin especificar)"]),
+    `🚚 Vehículo: ${picked("vehicles")[0] || ""}`,
+    `👥 Modalidad: ${picked("modo")[0] || ""}`,
+  ];
+  if (extras.length) lines.push(`⚙️ Opciones: ${extras.join(", ")}`);
+  lines.push(`💳 Pago: ${picked("pago")[0] || ""}`);
+  if (v("tarifa")) lines.push(`💰 Tarifa ofrecida: $${v("tarifa")}`);
+  return lines.join("\n");
+}
+
+function waLink(text) {
+  const base = NUMERO_WHATSAPP ? `https://wa.me/${NUMERO_WHATSAPP}` : "https://wa.me/";
+  return `${base}?text=${encodeURIComponent(text)}`;
+}
+
+function validate(show) {
+  let ok = true, first = null;
+  document.querySelectorAll(".field[data-req]").forEach((f) => {
+    const input = f.querySelector("input");
+    const bad = !input.value.trim();
+    if (show) f.classList.toggle("error", bad);
+    else if (!bad) f.classList.remove("error");
+    if (bad) { ok = false; first = first || input; }
+  });
+  const noItems = !ITEMS.some((n) => counts[n] > 0) && !v("otros");
+  if (show || !noItems) $("itemsErr").style.display = show && noItems ? "block" : "none";
+  if (noItems) { ok = false; first = first || $("otros"); }
+  return { ok, first };
+}
+
+function update() {
+  const msg = buildMessage();
+  $("preview").textContent = msg;
+  $("send").href = waLink(msg);
+  validate(false);
+  try { localStorage.setItem("donramon-contacto", JSON.stringify({ n: v("nombre"), t: v("telefono") })); } catch (_) {}
+}
+
+$("send").addEventListener("click", (e) => {
+  const { ok, first } = validate(true);
+  if (!ok) {
+    e.preventDefault();
+    $("barMsg").className = "bar-msg";
+    $("barMsg").textContent = "Faltan algunos datos. Revisa los campos en rojo.";
+    first.scrollIntoView({ behavior: "smooth", block: "center" });
+    setTimeout(() => first.focus({ preventScroll: true }), 300);
+    return;
+  }
+  $("send").href = waLink(buildMessage());
+  $("barMsg").className = "bar-msg ok";
+  $("barMsg").textContent = "Se abrirá WhatsApp con tu solicitud. Solo toca enviar.";
+});
+
+$("form").addEventListener("input", update);
+$("form").addEventListener("change", update);
+$("form").addEventListener("submit", (e) => e.preventDefault());
+
+try {
+  const saved = JSON.parse(localStorage.getItem("donramon-contacto") || "null");
+  if (saved) { $("nombre").value = saved.n || ""; $("telefono").value = saved.t || ""; }
+} catch (_) {}
+update();
+</script>
+</body>
+</html>
