@@ -158,19 +158,6 @@ details.gm ol { margin: 8px 0; padding-left: 20px; font-size: 0.88rem; color: va
 details.gm input { width: 100%; border: 2px solid var(--line); border-radius: 12px; background: var(--bg); color: var(--fg); font: inherit; padding: 10px 12px; }
 details.gm a { color: var(--fg); font-weight: 700; }
 .leaflet-container { font: inherit; }
-/* Fotos */
-.photos { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; }
-.photo-add, .thumb { aspect-ratio: 1; max-width: 100%; border-radius: 16px; }
-.photo-add { background: var(--field); border: 2px dashed var(--line); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-weight: 700; font-size: 0.85rem; cursor: pointer; text-align: center; }
-.photo-add span { font-size: 1.8rem; line-height: 1; }
-.photo-add[hidden] { display: none; }
-.photo-add:hover { background: var(--field-hover); }
-.thumb { position: relative; overflow: hidden; background: var(--field); }
-.thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.thumb button { position: absolute; top: 6px; right: 6px; width: 28px; height: 28px; border-radius: 50%; border: 0; background: rgba(0,0,0,.65); color: #fff; font-size: 1rem; font-weight: 700; cursor: pointer; line-height: 1; }
-.thumb button:focus-visible, .photo-add:focus-within { outline: 3px solid var(--accent); outline-offset: 2px; }
-.cta[hidden] { display: none; }
-.cta-2 { background: var(--fg); color: var(--bg); font-size: 1.05rem; padding: 14px; }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
 </head>
@@ -247,13 +234,6 @@ details.gm a { color: var(--fg); font-weight: 700; }
       </div>
       <span class="err-msg" id="itemsErr" style="margin-top:-6px">Agrega al menos un elemento o escríbelo arriba.</span>
 
-      <h2>📸 Fotos de tus cosas <small>opcional</small></h2>
-      <div class="photos" id="photos">
-        <label class="photo-add" for="fotos"><span aria-hidden="true">＋</span>Agregar fotos</label>
-      </div>
-      <input type="file" id="fotos" accept="image/*" multiple hidden>
-      <p class="note">Las fotos nos ayudan a darte un precio más exacto. Al final te pediremos enviarlas por WhatsApp.</p>
-
       <h2>🚚 Vehículo</h2>
       <div class="vehicles" id="vehicles">
         <button type="button" class="veh" data-v="Pick-up / camioneta" aria-pressed="false"><b>Pick-up</b><small>Pocos elementos</small></button>
@@ -297,7 +277,6 @@ details.gm a { color: var(--fg); font-weight: 700; }
   <div class="bar-inner">
     <p class="bar-msg" id="barMsg" role="status"></p>
     <a class="cta" id="send" href="#" target="_blank" rel="noopener">Enviar por WhatsApp</a>
-    <button type="button" class="cta cta-2" id="sendPhotos" hidden>📸 Paso 2: enviar mis fotos</button>
   </div>
 </div>
 
@@ -637,7 +616,6 @@ function buildMessage() {
     "",
     "📦 *Elementos a transportar:*",
     ...(lista.length ? lista : ["🔹 (sin especificar)"]),
-    ...(fotos.length ? ["", `📸 *Fotos:* te envío ${fotos.length} foto${fotos.length > 1 ? "s" : ""} en el siguiente mensaje`] : []),
     "",
     `🚚 *Vehículo:* ${picked("vehicles")[0] || ""}`,
     "",
@@ -647,46 +625,6 @@ function buildMessage() {
   lines.push("", `💳 *Forma de pago:* ${picked("pago")[0] || ""}`);
   return lines.join("\n");
 }
-
-// ───────── Fotos ─────────
-const MAX_FOTOS = 10;
-let fotos = [];
-function renderFotos() {
-  const box = $("photos");
-  box.querySelectorAll(".thumb").forEach((t) => { URL.revokeObjectURL(t.dataset.url); t.remove(); });
-  fotos.forEach((f, i) => {
-    const url = URL.createObjectURL(f);
-    const t = document.createElement("div");
-    t.className = "thumb"; t.dataset.url = url;
-    t.innerHTML = `<img alt="Foto ${i + 1}"><button type="button" aria-label="Quitar foto ${i + 1}">×</button>`;
-    t.querySelector("img").src = url;
-    t.querySelector("button").addEventListener("click", () => { fotos.splice(i, 1); renderFotos(); });
-    box.insertBefore(t, box.querySelector(".photo-add"));
-  });
-  box.querySelector(".photo-add").hidden = fotos.length >= MAX_FOTOS;
-  if (!fotos.length) $("sendPhotos").hidden = true;
-  update();
-}
-$("fotos").addEventListener("change", (e) => {
-  fotos = fotos.concat([...e.target.files].filter((f) => f.type.startsWith("image/"))).slice(0, MAX_FOTOS);
-  e.target.value = "";
-  renderFotos();
-});
-$("sendPhotos").addEventListener("click", async () => {
-  const msg = $("barMsg");
-  const data = { files: fotos, text: `Fotos de mi trasteo${v("nombre") ? " – " + v("nombre") : ""}` };
-  if (navigator.canShare && navigator.canShare({ files: fotos })) {
-    try {
-      await navigator.share(data);
-      msg.className = "bar-msg ok"; msg.textContent = "Elige WhatsApp y el chat de Transportes Don Ramón.";
-    } catch (err) {
-      if (err && err.name === "AbortError") return;
-      msg.className = "bar-msg"; msg.textContent = "No se pudieron compartir. Envíalas desde el chat con el clip 📎.";
-    }
-  } else {
-    msg.className = "bar-msg"; msg.textContent = "Aquí no se pueden enviar fotos directo. Envíalas en el chat de WhatsApp con el clip 📎.";
-  }
-});
 
 function waLink(text) {
   // api.whatsapp.com conserva los emojis; el enlace corto wa.me a veces los daña al redirigir.
@@ -731,10 +669,7 @@ $("send").addEventListener("click", (e) => {
   }
   $("send").href = waLink(buildMessage());
   $("barMsg").className = "bar-msg ok";
-  $("barMsg").textContent = fotos.length
-    ? "Se abrirá WhatsApp: toca enviar y luego vuelve aquí para el paso 2 (fotos)."
-    : "Se abrirá WhatsApp con tu solicitud. Solo toca enviar.";
-  $("sendPhotos").hidden = fotos.length === 0;
+  $("barMsg").textContent = "Se abrirá WhatsApp con tu solicitud. Solo toca enviar.";
 });
 
 $("form").addEventListener("input", update);
