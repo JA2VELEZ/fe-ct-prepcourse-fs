@@ -69,6 +69,10 @@ h2 small { font-weight: 500; color: var(--muted); font-size: 0.8rem; }
 .field.error .err-msg { display: block; }
 
 .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.add-stop { border: 2px dashed var(--line); background: transparent; color: var(--fg); font: inherit; font-weight: 700; font-size: 1rem; padding: 14px; border-radius: 18px; cursor: pointer; }
+.add-stop:hover { background: var(--field); }
+.remove-stop { border: 0; background: transparent; color: var(--danger); font: inherit; font-weight: 700; font-size: 0.9rem; cursor: pointer; padding: 4px 0; }
+.add-stop:focus-visible, .remove-stop:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 .chip {
   border: 0; background: var(--field); color: var(--fg); font: inherit; font-weight: 600; font-size: 0.98rem;
   padding: 11px 16px; border-radius: 999px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
@@ -178,6 +182,19 @@ details.preview pre { white-space: pre-wrap; word-break: break-word; font-family
 
       <h2><i class="dot b"></i>Lugar de entrega</h2>
       <div class="route" id="stop-d"></div>
+
+      <button type="button" class="add-stop" id="addStop" aria-expanded="false">➕ Agregar parada adicional</button>
+      <div id="paradaBox" hidden>
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <h2 style="justify-content:space-between"><span>🛑 Parada adicional</span><button type="button" class="remove-stop" id="removeStop">Quitar parada</button></h2>
+          <div class="route" id="stop-p"></div>
+          <div class="field" data-req>
+            <label for="pElem">¿Qué se recoge o se deja en esta parada?</label>
+            <textarea id="pElem" placeholder="Ej. Recoger una lavadora y 3 cajas donde mi mamá"></textarea>
+            <span class="err-msg">Cuéntanos qué se recoge o se deja en la parada.</span>
+          </div>
+        </div>
+      </div>
 
       <h2>📦 ¿Qué vas a trastear? <small>toca + para agregar</small></h2>
       <div class="items" id="items"></div>
@@ -350,6 +367,8 @@ function buildStop(p, nombre) {
   fillMun(); fillBar(); sync();
 }
 
+function paradaActiva() { return !$("paradaBox").hidden; }
+
 function stopLines(p) {
   const dep = $(p + "Dep").value;
   const mun = $(p + "Mun").value === OTRO ? v(p + "MunOtro") : $(p + "Mun").value;
@@ -461,6 +480,7 @@ function buildMessage() {
     "",
     "🏁 *Dirección de entrega:*",
     ...stopLines("d"),
+    ...(paradaActiva() ? ["", "🛑 *Parada adicional:*", ...stopLines("p"), `📦 Se recoge / se deja: ${v("pElem")}`] : []),
     "",
     "📦 *Elementos a transportar:*",
     ...(lista.length ? lista : ["🔹 (sin especificar)"]),
@@ -483,8 +503,8 @@ function waLink(text) {
 function validate(show) {
   let ok = true, first = null;
   document.querySelectorAll(".field[data-req]").forEach((f) => {
-    if (f.hidden) { f.classList.remove("error"); return; }
-    const input = f.querySelector("input, select");
+    if (f.hidden || f.closest("[hidden]")) { f.classList.remove("error"); return; }
+    const input = f.querySelector("input, select, textarea");
     const bad = !input.value.trim();
     if (show) f.classList.toggle("error", bad);
     else if (!bad) f.classList.remove("error");
@@ -530,5 +550,15 @@ try {
 } catch (_) {}
 buildStop("o", "recogida");
 buildStop("d", "entrega");
+buildStop("p", "la parada");
+function setParada(on) {
+  $("paradaBox").hidden = !on;
+  $("addStop").hidden = on;
+  $("addStop").setAttribute("aria-expanded", String(on));
+  if (on) $("pMun").focus();
+  update();
+}
+$("addStop").addEventListener("click", () => setParada(true));
+$("removeStop").addEventListener("click", () => { setParada(false); $("addStop").focus(); });
 update();
 </script>
