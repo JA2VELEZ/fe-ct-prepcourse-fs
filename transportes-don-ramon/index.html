@@ -521,6 +521,28 @@ function stopLines(p) {
   ];
 }
 
+// Punto para la ruta: el pin del mapa si existe; si no, la dirección escrita
+function stopQuery(p) {
+  if (coords[p]) return `${coords[p].lat.toFixed(6)},${coords[p].lng.toFixed(6)}`;
+  if (!v(p + "Dir")) return "";
+  const mun = $(p + "Mun").value === OTRO ? v(p + "MunOtro") : $(p + "Mun").value;
+  const barSel = $(p + "Bar");
+  const bar = ($("f-" + p + "Bar").hidden || barSel.value === OTRO) ? v(p + "BarOtro") : barSel.value;
+  return [v(p + "Dir"), bar, mun, $(p + "Dep").value, "Colombia"].filter(Boolean).join(", ");
+}
+function routeLine() {
+  const a = stopQuery("o"), b = stopQuery("d");
+  if (!a || !b) return [];
+  const u = new URL("https://www.google.com/maps/dir/");
+  u.searchParams.set("api", "1");
+  u.searchParams.set("origin", a);
+  u.searchParams.set("destination", b);
+  const w = paradaActiva() ? stopQuery("p") : "";
+  if (w) u.searchParams.set("waypoints", w);
+  u.searchParams.set("travelmode", "driving");
+  return ["", `🧭 *Ruta completa:* ${u.toString()}`];
+}
+
 const ITEMS = ["Cama sencilla","Cama doble","Colchón","Nevera","Lavadora","Estufa","Sofá","Comedor","Escritorio","Closet / armario","Televisor","Cajas"];
 const counts = {};
 const $ = (id) => document.getElementById(id);
@@ -623,6 +645,7 @@ function buildMessage() {
   ];
   if (extras.length) lines.push("", `🔧 *Opciones:* ${extras.join(", ")}`);
   lines.push("", `💳 *Forma de pago:* ${picked("pago")[0] || ""}`);
+  lines.push(...routeLine());
   return lines.join("\n");
 }
 
