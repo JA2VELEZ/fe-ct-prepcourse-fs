@@ -233,7 +233,7 @@ details.preview pre { white-space: pre-wrap; word-break: break-word; font-family
         <button type="button" class="chip" data-val="Bancolombia" aria-pressed="false">Bancolombia</button>
       </div>
 
-      <details class="preview" id="previewBox">
+      <details class="preview" id="previewBox" open>
         <summary>Ver cómo llegará tu mensaje</summary>
         <pre id="preview"></pre>
       </details>
@@ -251,7 +251,7 @@ details.preview pre { white-space: pre-wrap; word-break: break-word; font-family
 
 <script>
 // ⚙️ CONFIGURA AQUÍ tu número de WhatsApp con indicativo de país, sin + ni espacios. Ej: "573001234567"
-const NUMERO_WHATSAPP = "";
+const NUMERO_WHATSAPP = "573246779520"; // 324 677 9520
 
 // ───────── Ubicaciones: departamento → municipio → barrio ─────────
 const OTRO = "__otro__";
@@ -290,7 +290,7 @@ const BARRIOS = {
   "Antioquia|Rionegro": ["Centro","San Antonio de Pereira","El Porvenir","Alto del Medio","Llanogrande","Cuatro Esquinas","Gualanday","Barro Blanco","Fontibón","Belchite","Abreo","Juan Antonio Murillo","Galicia","Sector aeropuerto JMC"],
 };
 const DEP_DEFECTO = "Antioquia";
-const ACCESO = ["Primer piso / casa","Piso 2–3 sin ascensor","Piso 4 o más sin ascensor","Edificio con ascensor"];
+const ACCESO = ["Primer piso / casa","Sin ascensor (escaleras)","Edificio con ascensor"];
 
 const opt = (value, text = value) => { const o = document.createElement("option"); o.value = value; o.textContent = text; return o; };
 const otroOpt = (txt) => opt(OTRO, txt);
@@ -308,7 +308,8 @@ function buildStop(p, nombre) {
     fieldHTML(`${p}Bar`, "Barrio o sector", `<select id="${p}Bar"></select>`, "Elige el barrio o sector.") +
     fieldHTML(`${p}BarOtro`, "Barrio, sector o vereda", `<input id="${p}BarOtro" placeholder="Escribe el barrio, sector o vereda">`, "Escribe el barrio, sector o vereda.") +
     fieldHTML(`${p}Dir`, `Dirección de ${nombre}`, `<input id="${p}Dir" placeholder="${p === "o" ? "Ej. Cra 70 # 30-45, apto 302" : "Ej. Cl 10 Sur # 43-20, casa 5"}">`, `Escribe la dirección de ${nombre}. Si no la sabes, escribe un punto de referencia.`) +
-    fieldHTML(`${p}Piso`, "Piso y acceso", `<select id="${p}Piso"></select>`, "", false);
+    fieldHTML(`${p}Piso`, "Piso y acceso", `<select id="${p}Piso"></select>`, "", false) +
+    fieldHTML(`${p}PisoNum`, "¿En qué piso?", `<input id="${p}PisoNum" inputmode="numeric" maxlength="3" placeholder="Ej. 8">`, "Escribe el número del piso.");
 
   const dep = $(p + "Dep"), mun = $(p + "Mun"), bar = $(p + "Bar");
   dep.append(opt("", "Elige el departamento"));
@@ -337,6 +338,7 @@ function buildStop(p, nombre) {
     }
   }
   function sync() {
+    show(`${p}PisoNum`, $(p + "Piso").value !== ACCESO[0]);
     show(`${p}MunOtro`, mun.value === OTRO);
     const hasList = !!BARRIOS[dep.value + "|" + mun.value];
     show(`${p}Bar`, hasList);
@@ -345,6 +347,7 @@ function buildStop(p, nombre) {
   dep.addEventListener("change", () => { fillMun(); fillBar(); sync(); });
   mun.addEventListener("change", () => { fillBar(); sync(); });
   bar.addEventListener("change", sync);
+  $(p + "Piso").addEventListener("change", sync);
   fillMun(); fillBar(); sync();
 }
 
@@ -358,12 +361,13 @@ function stopLines(p) {
     const o = barSel.selectedOptions[0];
     bar = barSel.value + (o && o.dataset.comuna ? ` (${o.dataset.comuna})` : "");
   }
+  const acceso = v(p + "Piso") + (v(p + "Piso") !== ACCESO[0] && v(p + "PisoNum") ? ` · Piso ${v(p + "PisoNum")}` : "");
   return [
-    `   • Departamento: ${dep}`,
-    `   • Municipio: ${mun}`,
-    `   • Barrio / sector: ${bar}`,
-    `   • Dirección: ${v(p + "Dir")}`,
-    `   • Acceso: ${v(p + "Piso")}`,
+    `🗺️ Departamento: ${dep}`,
+    `🏙️ Municipio: ${mun}`,
+    `🏘️ Barrio / sector: ${bar}`,
+    `🏠 Dirección: ${v(p + "Dir")}`,
+    `🏢 Acceso: ${acceso}`,
   ];
 }
 
@@ -439,28 +443,35 @@ function horaBonita(t) {
 }
 
 function buildMessage() {
-  const lista = ITEMS.filter((n) => counts[n] > 0).map((n) => `   • ${counts[n]} × ${n}`);
-  if (v("otros")) lista.push(`   • ${v("otros")}`);
+  const lista = ITEMS.filter((n) => counts[n] > 0).map((n) => `▪️ ${counts[n]} × ${n}`);
+  if (v("otros")) lista.push(`▪️ ${v("otros")}`);
   const extras = picked("extras");
   const lines = [
     "¡Hola! Quiero cotizar un trasteo con Transportes Don Ramón 🚚💨",
     "",
-    "✅ *Solicitud de Trasteo*",
-    `👤 Nombre: ${v("nombre")}`,
-    `📞 Celular: ${v("telefono")}`,
-    `📅 Fecha: ${fechaBonita(v("fecha"))}`,
-    `🕒 Hora: ${horaBonita(v("hora"))}`,
-    "📍 *Origen (recogida):*",
+    "✅ *SOLICITUD DE TRASTEO*",
+    "",
+    `👤 *Nombre:* ${v("nombre")}`,
+    `📞 *Celular:* ${v("telefono")}`,
+    "",
+    `📅 *Fecha:* ${fechaBonita(v("fecha"))}`,
+    `🕒 *Hora:* ${horaBonita(v("hora"))}`,
+    "",
+    "📍 *Dirección de recogida:*",
     ...stopLines("o"),
-    "📍 *Destino (entrega):*",
+    "",
+    "🏁 *Dirección de entrega:*",
     ...stopLines("d"),
+    "",
     "📦 *Elementos a transportar:*",
-    ...(lista.length ? lista : ["   • (sin especificar)"]),
-    `🚚 Vehículo: ${picked("vehicles")[0] || ""}`,
-    `👥 Modalidad: ${picked("modo")[0] || ""}`,
+    ...(lista.length ? lista : ["▪️ (sin especificar)"]),
+    "",
+    `🚚 *Vehículo:* ${picked("vehicles")[0] || ""}`,
+    "",
+    `👥 *Modalidad:* ${picked("modo")[0] || ""}`,
   ];
-  if (extras.length) lines.push(`⚙️ Opciones: ${extras.join(", ")}`);
-  lines.push(`💳 Pago: ${picked("pago")[0] || ""}`);
+  if (extras.length) lines.push("", `⚙️ *Opciones:* ${extras.join(", ")}`);
+  lines.push("", `💳 *Forma de pago:* ${picked("pago")[0] || ""}`);
   return lines.join("\n");
 }
 
@@ -487,7 +498,8 @@ function validate(show) {
 
 function update() {
   const msg = buildMessage();
-  $("preview").textContent = msg;
+  const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  $("preview").innerHTML = esc(msg).replace(/\*([^*\n]+)\*/g, "<b>$1</b>");
   $("send").href = waLink(msg);
   validate(false);
   try { localStorage.setItem("donramon-contacto", JSON.stringify({ n: v("nombre"), t: v("telefono") })); } catch (_) {}
