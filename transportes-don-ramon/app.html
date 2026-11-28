@@ -53,6 +53,7 @@ h2 small { font-weight: 500; color: var(--muted); font-size: 0.8rem; }
   background: var(--field); border-radius: 18px; padding: 12px 18px; display: flex; flex-direction: column;
   gap: 2px; border: 2px solid transparent; transition: border-color .15s, background .15s;
 }
+.field[hidden] { display: none; }
 .field:focus-within { border-color: var(--fg); }
 .field.error { border-color: var(--danger); }
 .field label { font-size: 0.82rem; color: var(--muted); font-weight: 600; }
@@ -140,7 +141,7 @@ details.preview pre { white-space: pre-wrap; word-break: break-word; font-family
     </div>
     <div>
       <h1>Transportes Don Ramón</h1>
-      <p>Trasteos y fletes · Medellín y Valle de Aburrá</p>
+      <p>Trasteos y fletes · Valle de Aburrá y Oriente antioqueño</p>
     </div>
   </header>
   <p class="intro">Llena los datos de tu trasteo y envíalos por WhatsApp. Te respondemos con la cotización.</p>
@@ -179,54 +180,11 @@ details.preview pre { white-space: pre-wrap; word-break: break-word; font-family
         </div>
       </div>
 
-      <h2>Ruta</h2>
-      <div class="route">
-        <div class="field" data-req>
-          <label for="oBarrio"><span class="stop-tag"><i class="dot a"></i>Barrio de recogida</span></label>
-          <input id="oBarrio" placeholder="Ej. Belén, Envigado, Bello…" list="barrios">
-          <span class="err-msg">Escribe el barrio de recogida.</span>
-        </div>
-        <div class="field" data-req>
-          <label for="oDir">Dirección exacta de recogida</label>
-          <input id="oDir" placeholder="Ej. Cra 70 # 30-45, apto 302">
-          <span class="err-msg">Escribe la dirección de recogida.</span>
-        </div>
-        <div class="field">
-          <label for="oPiso">Piso y acceso (recogida)</label>
-          <select id="oPiso">
-            <option>Primer piso / casa</option>
-            <option>Piso 2–3 sin ascensor</option>
-            <option>Piso 4 o más sin ascensor</option>
-            <option>Edificio con ascensor</option>
-          </select>
-        </div>
-        <div class="field" data-req>
-          <label for="dBarrio"><span class="stop-tag"><i class="dot b"></i>Barrio de entrega</span></label>
-          <input id="dBarrio" placeholder="Ej. Laureles, Itagüí, Sabaneta…" list="barrios">
-          <span class="err-msg">Escribe el barrio de entrega.</span>
-        </div>
-        <div class="field" data-req>
-          <label for="dDir">Dirección exacta de entrega</label>
-          <input id="dDir" placeholder="Ej. Cl 10 Sur # 43-20, casa 5">
-          <span class="err-msg">Escribe la dirección de entrega.</span>
-        </div>
-        <div class="field">
-          <label for="dPiso">Piso y acceso (entrega)</label>
-          <select id="dPiso">
-            <option>Primer piso / casa</option>
-            <option>Piso 2–3 sin ascensor</option>
-            <option>Piso 4 o más sin ascensor</option>
-            <option>Edificio con ascensor</option>
-          </select>
-        </div>
-      </div>
-      <datalist id="barrios">
-        <option value="Medellín - El Poblado"><option value="Medellín - Laureles"><option value="Medellín - Belén">
-        <option value="Medellín - Robledo"><option value="Medellín - Buenos Aires"><option value="Medellín - Manrique">
-        <option value="Medellín - Santa Mónica"><option value="Envigado"><option value="Sabaneta"><option value="Itagüí">
-        <option value="La Estrella"><option value="Caldas"><option value="Bello"><option value="Copacabana">
-        <option value="Girardota"><option value="Barbosa">
-      </datalist>
+      <h2><i class="dot a"></i>Lugar de recogida</h2>
+      <div class="route" id="stop-o"></div>
+
+      <h2><i class="dot b"></i>Lugar de entrega</h2>
+      <div class="route" id="stop-d"></div>
 
       <h2>📦 ¿Qué vas a trastear? <small>toca + para agregar</small></h2>
       <div class="items" id="items"></div>
@@ -266,12 +224,6 @@ details.preview pre { white-space: pre-wrap; word-break: break-word; font-family
         <button type="button" class="chip" data-val="Transferencia" aria-pressed="false">Transferencia</button>
       </div>
 
-      <h2>💰 Ofrece tu tarifa <small>opcional</small></h2>
-      <div class="field">
-        <label for="tarifa">Lo que te gustaría pagar</label>
-        <div class="money"><span>$</span><input id="tarifa" inputmode="numeric" placeholder="250.000"></div>
-      </div>
-
       <details class="preview" id="previewBox">
         <summary>Ver cómo llegará tu mensaje</summary>
         <pre id="preview"></pre>
@@ -291,6 +243,139 @@ details.preview pre { white-space: pre-wrap; word-break: break-word; font-family
 <script>
 // ⚙️ CONFIGURA AQUÍ tu número de WhatsApp con indicativo de país, sin + ni espacios. Ej: "573001234567"
 const NUMERO_WHATSAPP = "";
+
+// ───────── Ubicaciones: departamento → municipio → barrio ─────────
+const OTRO = "__otro__";
+const MEDELLIN = {
+  "Comuna 1 · Popular": ["Santo Domingo Savio","Popular","Granizal","Moscú","Villa Guadalupe","San Pablo","La Esperanza","El Compromiso","La Avanzada","Carpinelo"],
+  "Comuna 2 · Santa Cruz": ["Santa Cruz","La Isla","El Playón de los Comuneros","Pablo VI","La Frontera","La Francia","Andalucía","Villa del Socorro","Villa Niza","La Rosa"],
+  "Comuna 3 · Manrique": ["Manrique Central","Manrique Oriental","La Salle","Las Granjas","Campo Valdés","El Raizal","Versalles","La Cruz","Santa Inés","El Pomar","San José La Cima","Balcones del Jardín"],
+  "Comuna 4 · Aranjuez": ["Aranjuez","Berlín","San Isidro","Palermo","Bermejal - Los Álamos","Moravia","Sevilla","San Pedro","Las Esmeraldas","La Piñuela","Brasilia","Miranda"],
+  "Comuna 5 · Castilla": ["Castilla","Toscana","Héctor Abad Gómez","Florencia","Tejelo","Boyacá","Belalcázar","Girardot","Tricentenario","Francisco Antonio Zea","Alfonso López","Caribe","Las Brisas","Plaza de Ferias"],
+  "Comuna 6 · Doce de Octubre": ["Doce de Octubre","Santander","Pedregal","San Martín de Porres","Kennedy","Picacho","Picachito","Mirador del Doce","El Triunfo"],
+  "Comuna 7 · Robledo": ["Robledo","Bello Horizonte","Villa Flora","Palenque","Cucaracho","Fuente Clara","Santa Margarita","Olaya Herrera","Pajarito","Monteclaro","López de Mesa","El Diamante","Aures","Altamira","Córdoba","La Pilarica","Facultad de Minas"],
+  "Comuna 8 · Villa Hermosa": ["Villa Hermosa","La Mansión","San Miguel","La Ladera","Llanaditas","Los Mangos","Enciso","Sucre","El Pinal","Trece de Noviembre","La Libertad","Villatina","San Antonio","Las Estancias","Villa Turbay","La Sierra"],
+  "Comuna 9 · Buenos Aires": ["Buenos Aires","Juan Pablo II","Barrios de Jesús","Bomboná","Los Cerros - El Vergel","Alejandro Echavarría","Caicedo","Miraflores","Cataluña","La Milagrosa","Gerona","El Salvador","Loreto","Asomadera","Ocho de Marzo"],
+  "Comuna 10 · La Candelaria (Centro)": ["Centro","La Candelaria","Prado","Jesús Nazareno","El Chagualo","Estación Villa","San Benito","Guayaquil","Corazón de Jesús (Barrio Triste)","Calle Nueva","Perpetuo Socorro","Colón","Las Palmas","Boston","Los Ángeles","Villa Nueva","San Diego"],
+  "Comuna 11 · Laureles - Estadio": ["Laureles","Estadio","Carlos E. Restrepo","Suramericana","Naranjal","San Joaquín","Los Conquistadores","Bolivariana","Las Acacias","La Castellana","Lorena","El Velódromo","Florida Nueva","Los Colores","Cuarta Brigada"],
+  "Comuna 12 · La América": ["La América","Santa Mónica","Calasanz","Ferrini","La Floresta","Santa Lucía","Simón Bolívar","Santa Teresita","Los Pinos","El Danubio","Campo Alegre"],
+  "Comuna 13 · San Javier": ["San Javier","Veinte de Julio","El Salado","Nuevos Conquistadores","Las Independencias","Eduardo Santos","Betania","El Corazón","Belencito","Antonio Nariño","Juan XXIII","La Pradera","Los Alcázares","Metropolitano"],
+  "Comuna 14 · El Poblado": ["El Poblado","Manila","Astorga","Patio Bonito","Lalinde","Las Lomas","Altos del Poblado","El Tesoro","Los Naranjos","Los Balsos","San Lucas","El Castillo","Alejandría","La Florida","Villa Carlota","Castropol","Provenza","Ciudad del Río","La Aguacatala","Santa María de los Ángeles"],
+  "Comuna 15 · Guayabal": ["Guayabal","Trinidad","Santa Fe","Campo Amor","Cristo Rey","La Colina","Tenche","Noel","Shellmar"],
+  "Comuna 16 · Belén": ["Belén","Belén Rosales","Fátima","Los Alpes","La Gloria","Las Playas","Diego Echavarría","La Mota","Rodeo Alto","Loma de los Bernal","Las Violetas","Granada","San Bernardo","Nueva Villa de Aburrá","Zafra","Miravalle","El Rincón","La Hondonada"],
+  "Corregimientos": ["San Antonio de Prado","San Cristóbal","Altavista","Santa Elena","San Sebastián de Palmitas"],
+};
+const URBANO = ["Centro / zona urbana","Vereda / zona rural"];
+const ANTIOQUIA = {
+  "Valle de Aburrá": {
+    "Medellín": MEDELLIN,
+    "Bello": ["Centro","Niquía","Cabañas","Cabañitas","París","Zamora","La Madera","Santa Ana","Suárez","Pérez","Fontidueño","Manchester","Guasimalito","Navarra","La Gabriela","Hato Viejo","Trapiche","Bellavista"],
+    "Itagüí": ["Centro","Santa María","Ditaires","San Pío X","Simón Bolívar","Suramérica","La Gloria","San Gabriel","Calatrava","Los Naranjos","Las Mercedes","Yarumito","El Rosario","Ferrara","San Francisco","Pilsen"],
+    "Envigado": ["Zona Centro","El Portal","Alcalá","La Magnolia","Las Vegas","Zúñiga","Bosques de Zúñiga","El Esmeraldal","Loma del Atravesado","Las Antillas","San Marcos","La Paz","Obrero","Mesa","Las Flores","Uribe Ángel","Otraparte","La Sebastiana","El Chingüí","Villagrande","Pontevedra"],
+    "Sabaneta": ["Centro","Aliadas del Sur","Calle Larga","Entreamigos","Holanda","Las Casitas","Mayorca","Prados de Sabaneta","Restrepo Naranjo","San Joaquín","Virgen del Carmen","Vegas de La Doctora","María Auxiliadora","Loma de San José","Cañaveralejo","Las Lomitas"],
+    "La Estrella": ["Centro","La Tablaza","Pueblo Viejo","Ancón Sur","Bellavista","Chile","Juan XXIII","La Ferrería","Monterrey","Suramérica","San Agustín","Sierra Morena","Toledo"],
+    "Caldas": ["Centro","La Inmaculada","Andalucía","Bellavista","Fundadores","La Planta","Mandalay","Olaya Herrera","La Valeria","La Raya"],
+    "Copacabana": ["Centro","Machado","Las Vegas","Yarumito","Fátima","Pedregal","Simón Bolívar","El Tablazo","Villanueva","Portachuelo"],
+    "Girardota": ["Centro","El Paraíso","Guayacanes","San José","Aurelio Mejía","El Llano","Juan XXIII"],
+    "Barbosa": URBANO,
+  },
+  "Oriente antioqueño": {
+    "Rionegro": ["Centro","San Antonio de Pereira","El Porvenir","Alto del Medio","Llanogrande","Cuatro Esquinas","Gualanday","Barro Blanco","Fontibón","Belchite","Abreo","Juan Antonio Murillo","Galicia","Sector aeropuerto JMC","Vereda / zona rural"],
+    "Guarne": URBANO,
+    "Marinilla": URBANO,
+    "El Santuario": URBANO,
+    "El Retiro": URBANO,
+    "La Ceja": URBANO,
+    "El Carmen de Viboral": URBANO,
+  },
+};
+const ACCESO = ["Primer piso / casa","Piso 2–3 sin ascensor","Piso 4 o más sin ascensor","Edificio con ascensor"];
+
+const opt = (value, text = value) => { const o = document.createElement("option"); o.value = value; o.textContent = text; return o; };
+const otroOpt = (txt) => opt(OTRO, txt);
+
+function fieldHTML(id, label, control, err, req = true) {
+  return `<div class="field" ${req ? "data-req" : ""} id="f-${id}"><label for="${id}">${label}</label>${control}${err ? `<span class="err-msg">${err}</span>` : ""}</div>`;
+}
+
+function buildStop(p, nombre) {
+  const box = $("stop-" + p);
+  box.innerHTML =
+    fieldHTML(`${p}Dep`, "Departamento", `<select id="${p}Dep"></select>`, "Elige el departamento.") +
+    fieldHTML(`${p}DepOtro`, "¿Cuál departamento?", `<input id="${p}DepOtro" placeholder="Escribe el departamento">`, "Escribe el departamento.") +
+    fieldHTML(`${p}Mun`, "Municipio", `<select id="${p}Mun"></select>`, "Elige el municipio.") +
+    fieldHTML(`${p}MunOtro`, "¿Cuál municipio?", `<input id="${p}MunOtro" placeholder="Escribe el municipio">`, "Escribe el municipio.") +
+    fieldHTML(`${p}Bar`, "Barrio o sector", `<select id="${p}Bar"></select>`, "Elige el barrio o sector.") +
+    fieldHTML(`${p}BarOtro`, "Otro barrio, sector o vereda", `<input id="${p}BarOtro" placeholder="Escríbelo aquí">`, "Escribe el barrio, sector o vereda.") +
+    fieldHTML(`${p}Dir`, `Dirección de ${nombre}`, `<input id="${p}Dir" placeholder="${p === "o" ? "Ej. Cra 70 # 30-45, apto 302" : "Ej. Cl 10 Sur # 43-20, casa 5"}">`, `Escribe la dirección de ${nombre}. Si no la sabes, escribe un punto de referencia.`) +
+    fieldHTML(`${p}Piso`, "Piso y acceso", `<select id="${p}Piso"></select>`, "", false);
+
+  const dep = $(p + "Dep"), mun = $(p + "Mun"), bar = $(p + "Bar");
+  dep.append(opt("Antioquia"), otroOpt("Otro departamento"));
+  ACCESO.forEach((a) => $(p + "Piso").append(opt(a)));
+
+  const show = (id, on) => { const f = $("f-" + id); f.hidden = !on; if (!on) f.classList.remove("error"); };
+
+  function fillMun() {
+    mun.innerHTML = "";
+    mun.append(opt("", "Elige el municipio"));
+    for (const [region, muns] of Object.entries(ANTIOQUIA)) {
+      const g = document.createElement("optgroup"); g.label = region;
+      Object.keys(muns).forEach((m) => g.append(opt(m)));
+      mun.append(g);
+    }
+    mun.append(otroOpt("Otro municipio (escribirlo)"));
+  }
+  function barriosDe(m) {
+    for (const muns of Object.values(ANTIOQUIA)) if (muns[m]) return muns[m];
+    return null;
+  }
+  function fillBar() {
+    bar.innerHTML = "";
+    const list = barriosDe(mun.value);
+    bar.append(opt("", "Elige el barrio o sector"));
+    bar.append(otroOpt("✏️ Otro / no lo encuentro (escribirlo)"));
+    if (Array.isArray(list)) list.forEach((b) => bar.append(opt(b)));
+    else if (list) for (const [comuna, barrios] of Object.entries(list)) {
+      const g = document.createElement("optgroup"); g.label = comuna;
+      barrios.forEach((b) => { const o = opt(b); o.dataset.comuna = comuna; g.append(o); });
+      bar.append(g);
+    }
+  }
+  function sync() {
+    const depOtro = dep.value === OTRO;
+    show(`${p}DepOtro`, depOtro);
+    show(`${p}Mun`, !depOtro);
+    show(`${p}MunOtro`, depOtro || mun.value === OTRO);
+    const hasList = !depOtro && mun.value && mun.value !== OTRO;
+    show(`${p}Bar`, hasList);
+    show(`${p}BarOtro`, !hasList || bar.value === OTRO);
+  }
+  dep.addEventListener("change", sync);
+  mun.addEventListener("change", () => { fillBar(); sync(); });
+  bar.addEventListener("change", sync);
+  fillMun(); fillBar(); sync();
+}
+
+function stopLines(p) {
+  const dep = $(p + "Dep").value === OTRO ? v(p + "DepOtro") : $(p + "Dep").value;
+  const munSel = $(p + "Mun");
+  const mun = (dep !== "Antioquia" || munSel.value === OTRO) ? v(p + "MunOtro") : munSel.value;
+  const barSel = $(p + "Bar");
+  let bar;
+  if ($("f-" + p + "Bar").hidden || barSel.value === OTRO) bar = v(p + "BarOtro");
+  else {
+    const o = barSel.selectedOptions[0];
+    bar = barSel.value + (o && o.dataset.comuna ? ` (${o.dataset.comuna})` : "");
+  }
+  return [
+    `   • Departamento: ${dep}`,
+    `   • Municipio: ${mun}`,
+    `   • Barrio / sector: ${bar}`,
+    `   • Dirección: ${v(p + "Dir")}`,
+    `   • Acceso: ${v(p + "Piso")}`,
+  ];
+}
 
 const ITEMS = ["Cama sencilla","Cama doble","Colchón","Nevera","Lavadora","Estufa","Sofá","Comedor","Escritorio","Closet / armario","Televisor","Cajas"];
 const counts = {};
@@ -348,11 +433,6 @@ $("dayChips").addEventListener("click", (e) => {
   update();
 });
 
-// Tarifa con puntos de miles
-$("tarifa").addEventListener("input", (e) => {
-  const digits = e.target.value.replace(/\D/g, "").slice(0, 9);
-  e.target.value = digits ? Number(digits).toLocaleString("es-CO") : "";
-});
 
 const picked = (id) => [...$(id).querySelectorAll('[aria-pressed="true"]')].map((x) => x.dataset.val || x.dataset.v);
 const v = (id) => $(id).value.trim();
@@ -380,14 +460,10 @@ function buildMessage() {
     `📞 Celular: ${v("telefono")}`,
     `📅 Fecha: ${fechaBonita(v("fecha"))}`,
     `🕒 Hora: ${horaBonita(v("hora"))}`,
-    "📍 *Origen:*",
-    `   • Barrio de recogida: ${v("oBarrio")}`,
-    `   • Dirección exacta: ${v("oDir")}`,
-    `   • Acceso: ${v("oPiso")}`,
-    "📍 *Destino:*",
-    `   • Barrio de entrega: ${v("dBarrio")}`,
-    `   • Dirección exacta: ${v("dDir")}`,
-    `   • Acceso: ${v("dPiso")}`,
+    "📍 *Origen (recogida):*",
+    ...stopLines("o"),
+    "📍 *Destino (entrega):*",
+    ...stopLines("d"),
     "📦 *Elementos a transportar:*",
     ...(lista.length ? lista : ["   • (sin especificar)"]),
     `🚚 Vehículo: ${picked("vehicles")[0] || ""}`,
@@ -395,7 +471,6 @@ function buildMessage() {
   ];
   if (extras.length) lines.push(`⚙️ Opciones: ${extras.join(", ")}`);
   lines.push(`💳 Pago: ${picked("pago")[0] || ""}`);
-  if (v("tarifa")) lines.push(`💰 Tarifa ofrecida: $${v("tarifa")}`);
   return lines.join("\n");
 }
 
@@ -407,7 +482,8 @@ function waLink(text) {
 function validate(show) {
   let ok = true, first = null;
   document.querySelectorAll(".field[data-req]").forEach((f) => {
-    const input = f.querySelector("input");
+    if (f.hidden) { f.classList.remove("error"); return; }
+    const input = f.querySelector("input, select");
     const bad = !input.value.trim();
     if (show) f.classList.toggle("error", bad);
     else if (!bad) f.classList.remove("error");
@@ -450,5 +526,7 @@ try {
   const saved = JSON.parse(localStorage.getItem("donramon-contacto") || "null");
   if (saved) { $("nombre").value = saved.n || ""; $("telefono").value = saved.t || ""; }
 } catch (_) {}
+buildStop("o", "recogida");
+buildStop("d", "entrega");
 update();
 </script>
